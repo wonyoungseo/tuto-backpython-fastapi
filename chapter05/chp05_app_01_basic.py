@@ -9,6 +9,10 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+@app.get("/")
+async def hello_world():
+    return "Hello World"
+
 @app.get("/ping")
 async def ping():
     return "pong"

@@ -2,6 +2,10 @@ from fastapi import FastAPI
 
 app = FastAPI() # (1)
 
+@app.get("/")
+async def hello_world():
+    return "Hello World"
+
 @app.get("/ping") # (2)
 async def ping():
     return "pong"
