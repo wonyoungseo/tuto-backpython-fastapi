@@ -1,7 +1,12 @@
+# FastAPI applied ver.
+# applied followings;
+# - error exception handling
+
 import json
 import datetime
 from typing import List
 
+import uvicorn
 from fastapi import FastAPI, status, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, ValidationError
@@ -121,3 +126,12 @@ async def get_tweet_list():
         },
         status_code= status.HTTP_200_OK
     )
+
+if __name__ == "__main__":
+    uvicorn.run(app="chp05_app_02_applied:app",
+                host="0.0.0.0",
+                port=8989,
+                log_level='info',
+                access_log=True,
+                use_colors=True,
+                reload=False)
