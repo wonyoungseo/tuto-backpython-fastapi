@@ -1,3 +1,4 @@
+import json
 import datetime
 from typing import List
 
@@ -79,6 +80,39 @@ async def tweet(tweet_input: TweetInput):
         status_code=status.HTTP_200_OK
     )
 
+#### Endpoint: Follow
+
+class FollowRequest(BaseModel):
+
+    user_index_follow_from: int
+    user_index_follow_to: int
+
+class SetEncoder(json.JSONEncoder): # (7)
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        return json.JSONEncoder.default(self, obj)
+
+@app.post("/follow")
+async def follow(follow_request: FollowRequest):
+
+    user_idx_from = follow_request.user_index_follow_from
+    user_idx_to = follow_request.user_index_follow_to
+
+    if (user_idx_from not in app.APP_USERS) or (user_idx_to not in app.APP_USERS):
+        return JSONResponse(
+            content={"msg": "user id not exists"},
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = app.APP_USERS[user_idx_from]
+    user.setdefault('following', set()).add(user_idx_to)
+
+    return JSONResponse(
+        content=json.loads(json.dumps(user, cls=SetEncoder)),
+        status_code=status.HTTP_200_OK
+    )
+
 
 
 # (1): JSONResponse - dict을 json으로 변환하여 http 응답으로 보낼 수 있음
@@ -86,4 +120,5 @@ async def tweet(tweet_input: TweetInput):
 # (3): 엔드포인트 sign_up - 유저명과 이메일을 입력하여 Sign up 하는 엔드포인트.
 # (4): 엔드포인트 user_list - Sign up된 리스트 GET 메소드
 # (5): 데이터 validation - tweet 엔드포인트에 전달하는 데이터의 검증을 pydantic.validator를 통해 검증.
-
+# (6): 엔드포인트 follow
+# (7): SetEncoder - `Object type set is not JSON serializable` 에러를 해결하기 위한 클래스
