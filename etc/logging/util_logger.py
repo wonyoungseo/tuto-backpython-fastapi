@@ -1,13 +1,9 @@
 import os
 import logging
 import sys
-
-from uvicorn import Config, Server
 from loguru import logger
 
-LOG_LEVEL = logging.getLevelName(os.environ.get("LOG_LEVEL", "DEBUG"))
 JSON_LOGS = True if os.environ.get("JSON_LOGS", "0") == "1" else False
-
 
 class InterceptHandler(logging.Handler):
     def emit(self, record):
@@ -26,10 +22,10 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
-def setup_logging():
+def setup_logging(log_level="INFO"):
     # intercept everything at the root logger
     logging.root.handlers = [InterceptHandler()]
-    logging.root.setLevel(LOG_LEVEL)
+    logging.root.setLevel(log_level)
 
     # remove every other logger's handlers
     # and propagate to root logger
@@ -38,20 +34,11 @@ def setup_logging():
         logging.getLogger(name).propagate = True
 
     # configure loguru
-    logger.configure(handlers=[{"sink": sys.stdout, "serialize": JSON_LOGS}])
+    logger.configure(handlers=[{"sink": sys.stdout, "serialize": JSON_LOGS},
+                               {"sink": "./logs/{time}.log",
+                                "serialize": JSON_LOGS,
+                                "mode": "w",
+                                "rotation": "00:00",
+                                "retention": "2 months"}])
 
 
-if __name__ == '__main__':
-    server = Server(
-        Config(
-            "my_app.app:app",
-            host="0.0.0.0",
-            log_level=LOG_LEVEL,
-        ),
-    )
-
-    # setup logging last, to make sure no library overwrites it
-    # (they shouldn't, but it happens)
-    setup_logging()
-
-    server.run()
