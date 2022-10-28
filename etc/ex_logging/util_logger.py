@@ -3,6 +3,7 @@ import logging
 import sys
 from loguru import logger
 
+
 JSON_LOGS = True if os.environ.get("JSON_LOGS", "0") == "1" else False
 
 class InterceptHandler(logging.Handler):
@@ -37,8 +38,9 @@ def setup_logging(log_level="INFO"):
     logger.configure(handlers=[{"sink": sys.stdout, "serialize": JSON_LOGS},
                                {"sink": "./logs/{time}.log",
                                 "serialize": JSON_LOGS,
-                                "mode": "w",
+                                "mode": "w+",
                                 "rotation": "00:00",
                                 "retention": "2 months"}])
+
 
 
