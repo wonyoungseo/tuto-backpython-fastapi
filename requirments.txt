@@ -2,3 +2,5 @@ httpie
 uvicorn
 fastapi
 pytest
+sqlalchemy
+mysql-connector-python
