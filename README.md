@@ -2,7 +2,13 @@
 
 > 파이썬 기반 백엔드 개발과 FastAPI 학습을 위해 Flask 기반의 _깔끔한 파이썬 탄탄한 백엔드_ 책 내용을 FastAPI로 구현하고 정리함 
 
+## 실습 환경
+
 ```shell
+git clone https://github.com/lucaseo/backpython_tuto_fastapi.git
+cd backpython_tuto_fastapi
+python -m venv .venv
+source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
