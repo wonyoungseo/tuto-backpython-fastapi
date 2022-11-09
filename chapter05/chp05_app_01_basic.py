@@ -19,7 +19,7 @@ async def ping():
     return "pong"
 
 app.APP_USERS: dict = {}
-app.USER_INDEX: int = 1
+app.USER_ID: int = 1
 app.TWEET: List[dict] = []
 
 
@@ -34,9 +34,9 @@ class NewUserInput(BaseModel): # (2)
 async def sign_up(new_user: NewUserInput):
 
     new_user = new_user.dict()
-    new_user["idx"]=app.USER_INDEX
-    app.APP_USERS[new_user["idx"]] =new_user
-    app.USER_INDEX += 1
+    new_user["user_id"]=app.USER_ID
+    app.APP_USERS[new_user["user_id"]] =new_user
+    app.USER_ID += 1
 
     return JSONResponse(
         content = new_user,
@@ -47,17 +47,17 @@ async def sign_up(new_user: NewUserInput):
 #### Endpoint: Tweet
 
 class TweetInput(BaseModel):
-    user_index: int
+    user_id: int
     tweet: str
 
 @app.post("/tweet")
 async def tweet(tweet_input: TweetInput):
 
-    user_idx = tweet_input.user_index
+    user_id = tweet_input.user_id
     tweet = tweet_input.tweet
 
     ### (5)
-    if user_idx not in app.APP_USERS:
+    if user_id not in app.APP_USERS:
         return JSONResponse(
             content={"msg": "user id not exists"},
             status_code=status.HTTP_400_BAD_REQUEST
@@ -70,9 +70,9 @@ async def tweet(tweet_input: TweetInput):
         )
 
     app.TWEET.append(
-        {'idx': user_idx,
+        {'user_id': user_id,
          'tweet': tweet,
-         'datetime': datetime.datetime.now()}
+         'datetime': str(datetime.datetime.now())}
     )
 
     return JSONResponse(
@@ -80,12 +80,12 @@ async def tweet(tweet_input: TweetInput):
         status_code=status.HTTP_200_OK
     )
 
-#### Endpoint: Follow
+#### Endpoint: Follow & Unfollow
 
 class FollowRequest(BaseModel):
 
-    user_index_follow_from: int
-    user_index_follow_to: int
+    user_id_follow_origin: int
+    user_id_follow_target: int
 
 class SetEncoder(json.JSONEncoder): # (7)
     def default(self, obj):
@@ -96,21 +96,85 @@ class SetEncoder(json.JSONEncoder): # (7)
 @app.post("/follow")
 async def follow(follow_request: FollowRequest):
 
-    user_idx_from = follow_request.user_index_follow_from
-    user_idx_to = follow_request.user_index_follow_to
+    user_id_origin = follow_request.user_id_follow_origin
+    user_id_target = follow_request.user_id_follow_target
 
-    if (user_idx_from not in app.APP_USERS) or (user_idx_to not in app.APP_USERS):
+    if user_id_origin == user_id_target:
+        return JSONResponse(
+            content={"msg": "intend to follow oneself"},
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    if (user_id_origin not in app.APP_USERS) or (user_id_target not in app.APP_USERS):
         return JSONResponse(
             content={"msg": "user id not exists"},
             status_code=status.HTTP_400_BAD_REQUEST
         )
 
-    user = app.APP_USERS[user_idx_from]
-    user.setdefault('following', set()).add(user_idx_to)
+    user = app.APP_USERS[user_id_origin]
+    user.setdefault('following', set()).add(user_id_target)
 
     return JSONResponse(
         content=json.loads(json.dumps(user, cls=SetEncoder)),
         status_code=status.HTTP_200_OK
+    )
+
+class UnfollowRequest(BaseModel):
+
+    user_id_unfollow_origin: int
+    user_id_unfollow_target: int
+
+@app.post("/unfollow")
+async def unfollow(unfollow_request: UnfollowRequest):
+
+    user_id_origin = unfollow_request.user_id_unfollow_origin
+    user_id_target = unfollow_request.user_id_unfollow_target
+
+    if user_id_origin == user_id_target:
+        return JSONResponse(
+            content={"msg": "intend to unfollow oneself"},
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    if (user_id_origin not in app.APP_USERS) or (user_id_target not in app.APP_USERS):
+        return JSONResponse(
+            content={"msg": "user id not exists"},
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = app.APP_USERS[user_id_origin]
+    user.setdefault("following", set()).discard(user_id_target)
+
+    return JSONResponse(
+        content=json.loads(json.dumps(user, cls=SetEncoder)),
+        status_code=status.HTTP_200_OK
+    )
+
+#### Endpoint: Timeline
+
+class UserID(BaseModel):
+    user_id: int
+
+@app.get("/timeline/") # (8)
+async def timeline(user_id: UserID):
+    uid = user_id.user_id
+    if uid not in app.APP_USERS:
+        return JSONResponse(
+            content={"msg": "user not exist"},
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    user_list = app.APP_USERS[uid].get("following", set())
+    user_list.add(uid)
+
+    timeline = [t for t in app.TWEET if t['user_id'] in user_list]
+
+    return JSONResponse(
+        content = {
+            "user_id": uid,
+            "timeline": timeline
+        },
+        status_code=200
     )
 
 
@@ -120,5 +184,6 @@ async def follow(follow_request: FollowRequest):
 # (3): 엔드포인트 sign_up - 유저명과 이메일을 입력하여 Sign up 하는 엔드포인트.
 # (4): 엔드포인트 user_list - Sign up된 리스트 GET 메소드
 # (5): 데이터 validation - tweet 엔드포인트에 전달하는 데이터의 검증을 pydantic.validator를 통해 검증.
-# (6): 엔드포인트 follow
-# (7): SetEncoder - `Object type set is not JSON serializable` 에러를 해결하기 위한 클래스
+# (6): SetEncoder - `Object type set is not JSON serializable` 에러를 해결하기 위한 클래스
+# (7): 엔드포인트 follow / unfollow - 다른 유저를 팔로우하거나 언팔로우
+# (8): 엔드포인트 timeline - 타겟 유저와 팔로우 하는 유저의 트윗을 출력
