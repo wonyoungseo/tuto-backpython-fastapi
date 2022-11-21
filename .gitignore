@@ -346,6 +346,7 @@ reference/*
 junit/
 junit.xml
 test.db
+test/
 
 # .vscode
 .vscode/
