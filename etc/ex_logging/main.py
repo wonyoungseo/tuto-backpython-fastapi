@@ -13,8 +13,11 @@ from routers.router_hello_world import router as router_2
 from DSutils.file_utils import yaml_reader
 
 UVICORN_LOGGING_CONFIG = yaml_reader("./logger_config.yaml", verbose=False)
-LOG_LEVEL_STR = "INFO"
-LOG_LEVEL = logging.getLevelName(LOG_LEVEL_STR)
+API_LOG_LEVEL_STR = "INFO"
+UVICORN_LOG_LEVEL = "CRITICAL"
+API_LOG_LEVEL = logging.getLevelName(API_LOG_LEVEL_STR)
+UVICORN_LOG_LEVEL = logging.getLevelName(UVICORN_LOG_LEVEL)
+
 
 async def set_body(request: Request, body: bytes):
     async def receive() -> Message:
@@ -46,13 +49,13 @@ app.include_router(router_2)
 
 if __name__ == '__main__':
 
-    setup_logging(log_level=LOG_LEVEL)
+    setup_logging(log_level=API_LOG_LEVEL)
 
     uvicorn.run(
         app="main:app",
         host="0.0.0.0",
         port=8989,
         log_config=UVICORN_LOGGING_CONFIG,
-        log_level=LOG_LEVEL,
+        log_level=UVICORN_LOG_LEVEL,
         reload=False
     )
