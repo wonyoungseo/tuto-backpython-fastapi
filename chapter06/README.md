@@ -34,6 +34,10 @@ docker container start mysql_container
 docker exec -it mysql_container bash
 ```
 
+```text
+mysql -u root -p
+```
+
 - 비밀번호는 앞서 컨테이너 생성할 때 입력했던 YOUR_DB_PASSWORD을 동일하게 입력
 
 
@@ -41,10 +45,69 @@ docker exec -it mysql_container bash
 
 - 6장 API에 데이터베이스 연결하기 참조
 
-## 3. SQLAlchemy에서 데이터베이스 연결
+### 2.1. 쿼리
+
+```mysql
+CREATE DATABASE miniter;
+USE miniter;
+
+CREATE TABLE users(
+ id INT NOT NULL AUTO_INCREMENT,
+ name VARCHAR(255) NOT NULL,
+ email VARCHAR(255) NOT NULL,
+ hashed_password VARCHAR(255) NOT NULL,
+ profile VARCHAR(2000) NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+ PRIMARY KEY (id),
+ UNIQUE KEY email (email)
+);
+
+CREATE TABLE users_follow_list(
+    user_id INT NOT NULL,
+    follow_user_id INT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, follow_user_id),
+    CONSTRAINT users_follow_list_user_id_fkey FOREIGN KEY (user_id)
+    REFERENCES users(id), ➏
+    CONSTRAINT users_follow_list_follow_user_id_fkey FOREIGN KEY (follow_
+    user_id) REFERENCES users(id)
+);
+
+CREATE TABLE tweets(
+    id INT NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    tweet VARCHAR(300) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT tweets_user_id_fkey FOREIGN KEY (user_id) REFERENCES
+    users(id)
+);
+
+SHOW tables;
+EXPLAIN users;
+EXPLAIN users_follow_list;
+EXPLAIN tweets;
+```
+
+## 3. SQLAlchemy에서 데이터베이스 연결해보기
 
 - `ex_db_connect.py` 참조
 
+## 4. SQLAlchemy를 적용한 구현
+
+- 베이직
+  - `chp06_app_01_basic.py`
+- 응용
+  - `chp06_app_02_applied.py` (TBU) 
+
+## 4. 엔드포인트 실행
+
+### 4.1. 회원가입 엔드포인트
+
+```mysql
+http -v POST "http://localhost:9292/sign_up" name="kim" email="kim@helloworld.org" password="test1234" profile="test_kim"
+```
 
 ## Reference
 

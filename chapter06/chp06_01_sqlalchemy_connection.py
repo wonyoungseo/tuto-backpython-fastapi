@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 
 db_config = {
     'username': 'root',
-    'password': '{YOUR_PASSWORD}',
+    'password': '{YOUR_DB_PASSWORD}',
     'host': 'localhost',
     'port': 3306,
     'database': 'miniter'
