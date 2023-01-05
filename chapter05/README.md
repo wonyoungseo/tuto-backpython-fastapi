@@ -29,5 +29,3 @@ http -v GET "http://localhost:9292/timeline" user_id=1
 
 - `chp05_app_02_applied.py`
   - `_basic.py` 의 코드를 FastAPI의 best practice 에 맞게 구현함.
-
-(TBU)
