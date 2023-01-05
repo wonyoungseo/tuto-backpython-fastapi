@@ -76,3 +76,30 @@ async def sign_up(new_user: NewUserInput):
     )
 
 
+class TweetInput(BaseModel):
+    id: int
+    tweet: str
+
+@app.post("/tweet")
+async def tweet(tweet_input: TweetInput):
+
+    tweet = tweet_input.dict()
+
+    if len(tweet) > 100:
+        return JSONResponse(
+            content={"msg": "tweet message exceeds 100 characters"},
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    app.database.execute(text(
+        """
+        INSERT INTO tweets (user_id, tweet)
+        VALUES (:id, :tweet)
+        """), tweet)
+
+    return JSONResponse(
+        content={"input_tweet": tweet},
+        status_code=status.HTTP_200_OK
+    )
+
+

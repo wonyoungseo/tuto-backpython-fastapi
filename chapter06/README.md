@@ -105,8 +105,14 @@ EXPLAIN tweets;
 
 ### 4.1. 회원가입 엔드포인트
 
-```mysql
+```bash
 http -v POST "http://localhost:9292/sign_up" name="kim" email="kim@helloworld.org" password="test1234" profile="test_kim"
+```
+
+### 4.2. 트윗 엔드포인트
+
+```bash
+http -v POST "http://localhost:9292/tweet" id=1 tweet="Hello World"
 ```
 
 ## Reference
