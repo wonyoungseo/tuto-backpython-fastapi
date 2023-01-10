@@ -69,9 +69,8 @@ CREATE TABLE users_follow_list(
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, follow_user_id),
     CONSTRAINT users_follow_list_user_id_fkey FOREIGN KEY (user_id)
-    REFERENCES users(id), ➏
-    CONSTRAINT users_follow_list_follow_user_id_fkey FOREIGN KEY (follow_
-    user_id) REFERENCES users(id)
+    REFERENCES users(id),
+    CONSTRAINT users_follow_list_follow_user_id_fkey FOREIGN KEY (follow_user_id) REFERENCES users(id)
 );
 
 CREATE TABLE tweets(
@@ -114,6 +113,25 @@ http -v POST "http://localhost:9292/sign_up" name="kim" email="kim@helloworld.or
 ```bash
 http -v POST "http://localhost:9292/tweet" id=1 tweet="Hello World"
 ```
+
+### 4.3. 트윗 엔드포인트
+
+```bash
+http -v GET "http://localhost:9292/timeline/?user_id=1"
+```
+
+
+### 4.4 팔로우 언팔로우 엔드포인트
+
+```bash
+http -v POST "http://localhost:9292/follow" user_id_origin=2 user_id_target=2
+```
+
+```shell
+http -v POST "http://localhost:9292/unfollow" user_id_origin=2 user_id_target=2
+```
+
+
 
 ## Reference
 

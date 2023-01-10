@@ -40,7 +40,7 @@ async def ping():
     return "pong"
 
 
-class NewUserInput(BaseModel): # (2)
+class NewUserInput(BaseModel):
     name: str
     email: str
     password: str
@@ -77,7 +77,7 @@ async def sign_up(new_user: NewUserInput):
 
 
 class TweetInput(BaseModel):
-    id: int
+    user_id: int
     tweet: str
 
 @app.post("/tweet")
@@ -94,7 +94,7 @@ async def tweet(tweet_input: TweetInput):
     app.database.execute(text(
         """
         INSERT INTO tweets (user_id, tweet)
-        VALUES (:id, :tweet)
+        VALUES (:user_id, :tweet)
         """), tweet)
 
     return JSONResponse(
@@ -103,3 +103,93 @@ async def tweet(tweet_input: TweetInput):
     )
 
 
+class FollowRequest(BaseModel):
+
+    user_id_origin: int
+    user_id_target: int
+
+class SetEncoder(json.JSONEncoder): # (7)
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        return json.JSONEncoder.default(self, obj)
+
+@app.post("/follow")
+async def follow(follow_request: FollowRequest):
+
+    follow_request = follow_request.dict()
+
+    if follow_request['user_id_origin'] == follow_request['user_id_target']:
+        return JSONResponse(
+            content={"msg": "user cannot follow oneself"},
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    app.database.execute(text("""
+    INSERT INTO users_follow_list (user_id, follow_user_id) 
+    VALUES (:user_id_origin, :user_id_target)
+    """), follow_request)
+
+    return JSONResponse(
+        content='{} following {}'.format(follow_request['user_id_origin'],
+                                         follow_request['user_id_target']),
+        status_code=status.HTTP_200_OK
+    )
+
+class UnfollowRequest(BaseModel):
+
+    user_id_origin: int
+    user_id_target: int
+
+@app.post("/unfollow")
+async def unfollow(unfollow_request: UnfollowRequest):
+
+    unfollow_request = unfollow_request.dict()
+
+    if unfollow_request['user_id_origin'] == unfollow_request['user_id_target']:
+        return JSONResponse(
+            content={"msg": "user cannot unfollow oneself"},
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    app.database.execute(text("""
+    DELETE FROM users_follow_list
+    WHERE user_id = :user_id_origin AND
+          follow_user_id = :user_id_target
+    """), unfollow_request)
+
+    return JSONResponse(
+        content='{} unfollowed {}'.format(unfollow_request['user_id_origin'],
+                                          unfollow_request['user_id_target']),
+        status_code=status.HTTP_200_OK
+    )
+
+
+class UserID(BaseModel):
+    user_id: int
+
+@app.get("/timeline/")
+async def timeline(user_id: UserID):
+    uid = user_id.user_id
+
+    rows = app.database.execute(text("""
+    SELECT
+        t.user_id,
+        t.tweet
+    FROM tweets as t
+    LEFT JOIN users_follow_list as ufl ON ufl.user_id = :user_id
+    WHERE t.user_id = :user_id OR 
+          t.user_id = ufl.follow_user_id
+    """), {"user_id": uid}).fetchall()
+
+    timeline = [
+        {
+            'user_id': row['user_id'],
+            'tweet': row['tweet']
+        } for row in rows
+    ]
+
+    return JSONResponse(
+        content={"timeline": timeline},
+        status_code=status.HTTP_200_OK
+    )
