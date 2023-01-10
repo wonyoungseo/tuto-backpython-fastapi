@@ -1,4 +1,4 @@
-How to run
+# 챕터 3: 첫 API 개발 시작
 
 ```shell
 $ uvicorn chp03_app:app
