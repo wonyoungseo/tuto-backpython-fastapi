@@ -4,3 +4,4 @@ fastapi
 pytest
 sqlalchemy
 mysql-connector-python
+bcrypt
