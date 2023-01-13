@@ -71,7 +71,7 @@ async def sign_up(new_user: NewUserInput):
     } if row else None
 
     return JSONResponse(
-        content = new_user,
+        content = created_user,
         status_code = status.HTTP_201_CREATED
     )
 
