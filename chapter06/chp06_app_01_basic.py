@@ -1,13 +1,8 @@
 import json
-import datetime
-from typing import List
 
-import uvicorn
-from fastapi import FastAPI, status, Request
+from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError, ValidationError
 from pydantic import BaseModel
-from pydantic import validator
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 
@@ -47,7 +42,7 @@ class NewUserInput(BaseModel):
     profile: str
 
 
-@app.post("/sign_up") # (3)
+@app.post("/sign_up")
 async def sign_up(new_user: NewUserInput):
     new_user = new_user.dict()
     new_user_id = app.database.execute(text(
@@ -108,7 +103,7 @@ class FollowRequest(BaseModel):
     user_id_origin: int
     user_id_target: int
 
-class SetEncoder(json.JSONEncoder): # (7)
+class SetEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, set):
             return list(obj)
